@@ -1,0 +1,36 @@
+name: Recolector de Histórico 3 Días
+
+on:
+  schedule:
+    # Se ejecuta al minuto 0 de cada hora (24 veces al día)
+    - cron: '0 * * * *'
+  # Permite ejecutarlo manualmente desde la pestaña "Actions" de GitHub para probar
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  collect:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Descargar repositorio
+        uses: actions/checkout@v4
+
+      - name: Configurar Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Ejecutar recolector
+        run: node collector.js
+
+      - name: Guardar y subir cambios
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          git add historico.json
+          # Si no hay cambios en esta hora, no falla
+          git diff --staged --quiet || git commit -m "Actualizar historico.json [skip ci]"
+          git push
